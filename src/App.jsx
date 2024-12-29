@@ -6,28 +6,28 @@ import { DICTIONARIES, WORD_LENGTH, MAX_ATTEMPTS } from './constants';
 import { Modal } from './Modal';
 import { GameStats } from './GameStats';
 import { getTileStyle, getKeyStyle } from './utils';
-import type { Stats } from './types';
-const WordleGame: React.FC = () => {
+
+const WordleGame = () => {
   // State
   const [language, setLanguage] = useState('ru');
   const [darkMode, setDarkMode] = useState(false);
   const [targetWord, setTargetWord] = useState('');
-  const [guesses, setGuesses] = useState<string[]>([]);
+  const [guesses, setGuesses] = useState([]);
   const [currentGuess, setCurrentGuess] = useState('');
-  const [gameState, setGameState] = useState<"playing" | "won" | "lost">('playing');
+  const [gameState, setGameState] = useState<'playing' | 'won' | 'lost'>('playing');
   const [message, setMessage] = useState('');
   const [shakeRow, setShakeRow] = useState(-1);
   const [showRules, setShowRules] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [stats, setStats] = useState<Stats>({
+  const [stats, setStats] = useState({
     gamesPlayed: 0,
     gamesWon: 0,
     currentStreak: 0,
     maxStreak: 0,
     winRate: 0,
     distribution: Array(6).fill(0)
-  }); 
+  });
 
   useEffect(() => {
     loadStats();
@@ -55,20 +55,20 @@ const WordleGame: React.FC = () => {
     }
   };
 
-  const saveSettings = (newDarkMode: boolean, newLanguage: "en" | "ru") => {
+  const saveSettings = (newDarkMode, newLanguage) => {
     localStorage.setItem('wordleDarkMode', JSON.stringify(newDarkMode));
     localStorage.setItem('wordleLanguage', newLanguage);
     document.documentElement.classList.toggle('dark', newDarkMode);
   };
 
-  const updateStats = (won: boolean) => {
+  const updateStats = (won) => {
     const newStats = { ...stats };
     newStats.gamesPlayed++;
     if (won) {
       newStats.gamesWon++;
       newStats.currentStreak++;
       newStats.maxStreak = Math.max(newStats.currentStreak, newStats.maxStreak);
-      newStats.distribution[guesses.length]++;
+      if(guesses.length > 0 ) newStats.distribution[guesses.length - 1]++;
     } else {
       newStats.currentStreak = 0;
     }
@@ -90,13 +90,13 @@ const WordleGame: React.FC = () => {
 
   const handleGuess = () => {
     if (currentGuess.length !== WORD_LENGTH) {
-      setMessage(DICTIONARIES[language].ui.invalidLength as string);
+      setMessage(DICTIONARIES[language].ui.invalidLength);
       setShakeRow(guesses.length);
       return;
     }
 
     if (!DICTIONARIES[language].validWords.includes(currentGuess)) {
-      setMessage(DICTIONARIES[language].ui.invalidWord as string);
+      setMessage(DICTIONARIES[language].ui.invalidWord);
       setShakeRow(guesses.length);
       return;
     }
@@ -109,18 +109,18 @@ const WordleGame: React.FC = () => {
 
     if (currentGuess === targetWord) {
       setGameState('won');
-      setMessage(DICTIONARIES[language].ui.win as string);
+      setMessage(DICTIONARIES[language].ui.win);
       updateStats(true);
       setShowStats(true);
     } else if (newGuesses.length >= MAX_ATTEMPTS) {
       setGameState('lost');
-      setMessage(DICTIONARIES[language].ui.lose as string);
+      setMessage(DICTIONARIES[language].ui.lose);
       updateStats(false);
       setShowStats(true);
     }
   };
 
-  const handleKeyPress = (key: string) => {
+  const handleKeyPress = (key) => {
     if (gameState !== 'playing') return;
 
     const enterKey = language === 'en' ? 'ENTER' : 'ВВОД';
@@ -183,12 +183,12 @@ const WordleGame: React.FC = () => {
                   className={getTileStyle(
                     letter,
                     rowIndex,
-                    colIndex,                    
+                    colIndex,
                     rowIndex < guesses.length,
                     guesses,
                     targetWord
                   )}
-                  style={{ 
+                  style={{
                     animationDelay: `${colIndex * 100}ms`,
                     perspective: '1000px'
                   }}
@@ -230,10 +230,10 @@ const WordleGame: React.FC = () => {
       <Modal
         show={showRules}
         onClose={() => setShowRules(false)}
-        title={DICTIONARIES[language].ui.rules as string}
+        title={DICTIONARIES[language].ui.rules}
       >
         <div className="space-y-4">
-          {(DICTIONARIES[language].ui.rulesText as string[]).map((text, index) => (
+          {(DICTIONARIES[language].ui.rulesText).map((text, index) => (
             <p key={index}>{text}</p>
           ))}
         </div>
@@ -242,7 +242,7 @@ const WordleGame: React.FC = () => {
       <Modal
         show={showStats}
         onClose={() => setShowStats(false)}
-        title={DICTIONARIES[language].ui.statistics as string}
+        title={DICTIONARIES[language].ui.statistics}
       >
         <GameStats stats={stats} lang={language} />
       </Modal>
@@ -250,7 +250,7 @@ const WordleGame: React.FC = () => {
       <Modal
         show={showSettings}
         onClose={() => setShowSettings(false)}
-        title={DICTIONARIES[language].ui.settings as string}
+        title={DICTIONARIES[language].ui.settings}
       >
         <div className="space-y-4">
           <div className="flex items-center justify-between">
