@@ -9,7 +9,7 @@ export const DICTIONARIES = {
       ['ВВОД', 'Я', 'Ч', 'С', 'М', 'И', 'Т', 'Ь', 'Б', 'Ю', '←']
     ],
     ui: {
-      title: 'ВОРДЛ',
+      title: 'WORDLE',
       newGame: 'Новая игра',
       settings: 'Настройки',
       rules: 'Правила',

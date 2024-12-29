@@ -14,27 +14,47 @@ const WordleGame = () => {
   const [targetWord, setTargetWord] = useState('');
   const [guesses, setGuesses] = useState([]);
   const [currentGuess, setCurrentGuess] = useState('');
-  const [gameState, setGameState] = useState<'playing' | 'won' | 'lost'>('playing');
+  const [gameState, setGameState] = useState('playing');
   const [message, setMessage] = useState('');
   const [shakeRow, setShakeRow] = useState(-1);
   const [showRules, setShowRules] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-    const [words, setWords] = useState([]); // State to hold word list
+  const [words, setWords] = useState([]); 
   const [stats, setStats] = useState({
     gamesPlayed: 0,
     gamesWon: 0,
     currentStreak: 0,
     maxStreak: 0,
     winRate: 0,
-    distribution: Array(6).fill(0)
+    distribution: Array(MAX_ATTEMPTS).fill(0)
   });
 
   useEffect(() => {
     loadStats();
     loadSettings();
-      loadWords();
+    loadWords();
   }, [language]);
+
+  // Add keyboard event listener
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (gameState !== 'playing') return;
+
+      if (event.key === 'Enter') {
+        handleGuess();
+      } else if (event.key === 'Backspace') {
+        setCurrentGuess(prev => prev.slice(0, -1));
+      } else if (/^[a-zA-Zа-яА-Я]$/.test(event.key)) {
+        if (currentGuess.length < WORD_LENGTH) {
+          setCurrentGuess(prev => prev + event.key.toUpperCase());
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentGuess, gameState]);
 
   const loadStats = () => {
     const savedStats = localStorage.getItem(`wordleStats_${language}`);
@@ -42,8 +62,10 @@ const WordleGame = () => {
       try {
         const parsedStats = JSON.parse(savedStats);
         setStats({
-            ...parsedStats,
-            distribution: Array.isArray(parsedStats.distribution) ? parsedStats.distribution : Array(6).fill(0)
+          ...parsedStats,
+          distribution: Array.isArray(parsedStats.distribution) 
+            ? parsedStats.distribution 
+            : Array(MAX_ATTEMPTS).fill(0)
         });
       } catch (error) {
         console.error("Failed to parse stats from localStorage", error);
@@ -53,12 +75,11 @@ const WordleGame = () => {
           currentStreak: 0,
           maxStreak: 0,
           winRate: 0,
-          distribution: Array(6).fill(0)
+          distribution: Array(MAX_ATTEMPTS).fill(0)
         });
       }
     }
   };
-
 
   const loadSettings = () => {
     const savedDarkMode = localStorage.getItem('wordleDarkMode');
@@ -86,36 +107,42 @@ const WordleGame = () => {
       newStats.gamesWon++;
       newStats.currentStreak++;
       newStats.maxStreak = Math.max(newStats.currentStreak, newStats.maxStreak);
-      if(guesses.length > 0 ) newStats.distribution[guesses.length - 1]++;
+      if (guesses.length > 0 && guesses.length <= MAX_ATTEMPTS) {
+        newStats.distribution[guesses.length - 1]++;
+      }
     } else {
       newStats.currentStreak = 0;
     }
     newStats.winRate = Math.round((newStats.gamesWon / newStats.gamesPlayed) * 100);
-     // Ensure distribution is always carried over
     setStats(newStats);
     localStorage.setItem(`wordleStats_${language}`, JSON.stringify(newStats));
   };
-   const loadWords = async () => {
-        try {
-          const response = await fetch(language === 'en' ? '/src/assets/en_words.txt' : '/src/assets/ru_words.txt');
-          const text = await response.text();
-          const wordsArray = text.trim().split('\n').map(word => word.trim());
-            setWords(wordsArray);
-        } catch (error) {
-            console.error("Failed to load words", error);
-            setWords([]);
-        }
-    };
 
+  const loadWords = async () => {
+    try {
+      const response = await fetch(language === 'en' ? '/src/assets/en_words.txt' : '/src/assets/ru_words.txt');
+      const text = await response.text();
+      const wordsArray = text.trim().split('\n').map(word => word.trim().toUpperCase());
+      setWords(wordsArray);
+      if (wordsArray.length > 0) {
+        startNewGame(wordsArray);
+      }
+    } catch (error) {
+      console.error("Failed to load words", error);
+      setWords([]);
+    }
+  };
 
-  const startNewGame = () => {
-      const newWord = words[Math.floor(Math.random() * words.length)];
-    setTargetWord(newWord);
-    setGuesses([]);
-    setCurrentGuess('');
-    setGameState('playing');
-    setMessage('');
-    setShakeRow(-1);
+  const startNewGame = (wordArray = words) => {
+    if (wordArray.length > 0) {
+      const newWord = wordArray[Math.floor(Math.random() * wordArray.length)];
+      setTargetWord(newWord);
+      setGuesses([]);
+      setCurrentGuess('');
+      setGameState('playing');
+      setMessage('');
+      setShakeRow(-1);
+    }
   };
 
   const handleGuess = () => {
@@ -275,6 +302,17 @@ const WordleGame = () => {
         title={DICTIONARIES[language].ui.statistics}
       >
         <GameStats stats={stats} lang={language} />
+        {gameState !== 'playing' && (
+          <button
+            onClick={() => {
+              startNewGame();
+              setShowStats(false);
+            }}
+            className="mt-4 w-full py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+          >
+            {DICTIONARIES[language].ui.newGame}
+          </button>
+        )}
       </Modal>
 
       <Modal
