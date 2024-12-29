@@ -3,14 +3,13 @@ export const MAX_ATTEMPTS = 6;
 
 export const DICTIONARIES = {
   ru: {
-    validWords: ['КНИГА', 'СЛОВО', 'ВРЕМЯ', 'ЖИЗНЬ', 'МЕСТО', 'АВТОР', 'ПОЕЗД', 'РУЧКА', 'ГЛАЗА'],
     keyboard: [
       ['Й', 'Ц', 'У', 'К', 'Е', 'Н', 'Г', 'Ш', 'Щ', 'З', 'Х', 'Ъ'],
       ['Ф', 'Ы', 'В', 'А', 'П', 'Р', 'О', 'Л', 'Д', 'Ж', 'Э'],
       ['ВВОД', 'Я', 'Ч', 'С', 'М', 'И', 'Т', 'Ь', 'Б', 'Ю', '←']
     ],
     ui: {
-      title: 'WORDLE',
+      title: 'ВОРДЛ',
       newGame: 'Новая игра',
       settings: 'Настройки',
       rules: 'Правила',
@@ -34,10 +33,9 @@ export const DICTIONARIES = {
         'Жёлтый - буква есть в слове, но не на своем месте',
         'Серый - такой буквы в слове нет'
       ]
-    }
+    },
   },
   en: {
-    validWords: ['WORLD', 'BEACH', 'CLOCK', 'DREAM', 'EARTH', 'FLAME', 'GHOST', 'HEART', 'LIGHT', 'MUSIC'],
     keyboard: [
       ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
       ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
