@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, Info, BarChart3, Globe } from 'lucide-react';
 import { Alert, AlertDescription } from './Modal';
-
-import { DICTIONARIES, WORD_LENGTH, MAX_ATTEMPTS } from './constants';
 import { Modal } from './Modal';
 import { GameStats } from './GameStats';
 import { getTileStyle, getKeyStyle } from './utils';
+import { DICTIONARIES, WORD_LENGTH, MAX_ATTEMPTS } from './constants';
 
 const WordleGame = () => {
   // State
@@ -14,7 +13,7 @@ const WordleGame = () => {
   const [targetWord, setTargetWord] = useState('');
   const [guesses, setGuesses] = useState([]);
   const [currentGuess, setCurrentGuess] = useState('');
-  const [gameState, setGameState] = useState<'playing' | 'won' | 'lost'>('playing');
+  const [gameState, setGameState] = useState('playing');
   const [message, setMessage] = useState('');
   const [shakeRow, setShakeRow] = useState(-1);
   const [showRules, setShowRules] = useState(false);
@@ -26,7 +25,7 @@ const WordleGame = () => {
     currentStreak: 0,
     maxStreak: 0,
     winRate: 0,
-    distribution: Array(6).fill(0)
+    distribution: Array(MAX_ATTEMPTS).fill(0)
   });
 
   useEffect(() => {
@@ -38,7 +37,24 @@ const WordleGame = () => {
   const loadStats = () => {
     const savedStats = localStorage.getItem(`wordleStats_${language}`);
     if (savedStats) {
-      setStats(JSON.parse(savedStats));
+      try {
+        const parsedStats = JSON.parse(savedStats);
+        // Ensure distribution array exists and has correct length
+        if (!Array.isArray(parsedStats.distribution)) {
+          parsedStats.distribution = Array(MAX_ATTEMPTS).fill(0);
+        }
+        setStats(parsedStats);
+      } catch (error) {
+        console.error("Failed to parse stats from localStorage", error);
+        setStats({
+          gamesPlayed: 0,
+          gamesWon: 0,
+          currentStreak: 0,
+          maxStreak: 0,
+          winRate: 0,
+          distribution: Array(MAX_ATTEMPTS).fill(0)
+        });
+      }
     }
   };
 
@@ -64,15 +80,28 @@ const WordleGame = () => {
   const updateStats = (won) => {
     const newStats = { ...stats };
     newStats.gamesPlayed++;
+    
     if (won) {
       newStats.gamesWon++;
       newStats.currentStreak++;
       newStats.maxStreak = Math.max(newStats.currentStreak, newStats.maxStreak);
-      if(guesses.length > 0 ) newStats.distribution[guesses.length - 1]++;
+      
+      // Ensure we're updating the correct index in distribution
+      const guessCount = guesses.length;
+      if (guessCount > 0 && guessCount <= MAX_ATTEMPTS) {
+        newStats.distribution[guessCount - 1]++;
+      }
     } else {
       newStats.currentStreak = 0;
     }
+    
     newStats.winRate = Math.round((newStats.gamesWon / newStats.gamesPlayed) * 100);
+    
+    // Ensure distribution array exists
+    if (!Array.isArray(newStats.distribution)) {
+      newStats.distribution = Array(MAX_ATTEMPTS).fill(0);
+    }
+    
     setStats(newStats);
     localStorage.setItem(`wordleStats_${language}`, JSON.stringify(newStats));
   };
@@ -211,7 +240,7 @@ const WordleGame = () => {
       {/* Keyboard */}
       <div className="w-full max-w-md space-y-2">
         {DICTIONARIES[language].keyboard.map((row, i) => (
-          <div key={i} className="flex justify-center">
+          <div key={i} className="flex justify-center gap-1">
             {row.map((key) => (
               <button
                 key={key}
@@ -233,7 +262,7 @@ const WordleGame = () => {
         title={DICTIONARIES[language].ui.rules}
       >
         <div className="space-y-4">
-          {(DICTIONARIES[language].ui.rulesText).map((text, index) => (
+          {DICTIONARIES[language].ui.rulesText.map((text, index) => (
             <p key={index}>{text}</p>
           ))}
         </div>
